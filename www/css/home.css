@@ -1,0 +1,13 @@
+#home {
+    text-align: center;
+    height: calc(100% - 65px) !important;
+    width: 100vw;
+    margin: auto;
+    padding: 0px 0px 0px 0px;
+}
+
+#map {
+    float: top;
+    height: calc(100% - 65px);
+    width: 100%;
+}

@@ -1,0 +1,15 @@
+.rot_table {
+    width: 100vw;
+}
+
+#head {
+    width: 100vw;
+    height: 80vw;
+}
+
+#calibration {
+    text-align: center;
+    max-width: 500px;
+    margin: auto;
+    padding: 0px 0px 0px 0px;
+}
