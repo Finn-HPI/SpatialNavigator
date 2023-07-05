@@ -5,20 +5,51 @@ let material1, material2, material3;
 let analyser1, analyser2, analyser3;
 
 const clock = new THREE.Clock();
+const YAW_CORRECTION = 90
 
 let target = new THREE.Vector3(0, 0, 0)
 
+const _LatLngOrigin = [52.39351850009692, 13.131236542297362];
+let metersPerLat;
+let metersPerLon;
+
+function FindMetersPerLat(lat) // Compute lengths of degrees
+{
+    const m1 = 111132.92;    // latitude calculation term 1
+    const m2 = -559.82;        // latitude calculation term 2
+    const m3 = 1.175;      // latitude calculation term 3
+    const m4 = -0.0023;        // latitude calculation term 4
+    const p1 = 111412.84;    // longitude calculation term 1
+    const p2 = -93.5;      // longitude calculation term 2
+    const p3 = 0.118;      // longitude calculation term 3
+
+    lat = lat * (Math.PI / 180);
+    // Calculate the length of a degree of latitude and longitude in meters
+    metersPerLat = m1 + (m2 * Math.cos(2 * lat)) + (m3 * Math.cos(4 * lat)) + (m4 * Math.cos(6 * lat));
+    metersPerLon = (p1 * Math.cos(lat)) + (p2 * Math.cos(3 * lat)) + (p3 * Math.cos(5 * lat));
+    console.log(metersPerLat, metersPerLon)
+}
+
+function ConvertGPStoUCS(lat, lng) {
+    FindMetersPerLat(_LatLngOrigin[0]);
+    const zPosition = metersPerLat * (lat - _LatLngOrigin[0]); //Calc current lat
+    const xPosition = metersPerLon * (lng - _LatLngOrigin[1]); //Calc current lat
+    return new THREE.Vector3(xPosition, 2, zPosition);
+}
+
 function rotationHandler(e) {
-    let yaw = (e.webkitCompassHeading || Math.abs(e.alpha - 360)) * (Math.PI / 180);
+    let yaw = (e.webkitCompassHeading || Math.abs(e.alpha) + YAW_CORRECTION) * (Math.PI / 180);
     let q = new Quaternion();
-    q.setFromEuler(0, -yaw, 0, "XYZ");
+    q.setFromEuler(0, yaw, 0, "XYZ");
     q.normalize();
     controls.onRotationChanged(q);
 }
 
-function onSuccess(pos) {
-    const crd = pos.coords;
-    console.log(crd.latitude, " ", crd.longitude);
+function onSuccess(event) {
+    const crd = event.coords;
+    const pos = ConvertGPStoUCS(crd.latitude, crd.longitude);
+    document.getElementById("debug").innerHTML = `${pos.x}, ${pos.z}`;
+    controls.onPositionChanged(pos);
 };
 
 function onError(err) {
@@ -28,8 +59,9 @@ function onError(err) {
 
 function init() {
     camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
-    camera.position.set(0, 50, 0);
-
+    camera.position.set(0, 2, 0);
+    const pos = ConvertGPStoUCS(_LatLngOrigin[0], _LatLngOrigin[1])
+    document.getElementById("debug").innerHTML = `${pos.x}, ${pos.z}`;
     const listener = new THREE.AudioListener();
     camera.add(listener);
 
@@ -37,26 +69,25 @@ function init() {
     scene.background = new THREE.CubeTextureLoader()
         .setPath('textures/')
         .load([
-            'front.png',
-            'back.png',
+            'front_with_north.png',
+            'south.png',
             'up.png',
             'down.png',
-            'left.png',
-            'right.png'
+            'west.png',
+            'east.png'
         ]);
 
     // const hemiLight = new THREE.HemisphereLight(0x0000ff, 0x00ff00, 10);
     // scene.add(hemiLight);
     const light = new THREE.HemisphereLight(0xffffbb, 0x41980a, 1.5);
     scene.add(light);
-    const sphere = new THREE.SphereGeometry(20, 32, 16);
+    const sphere = new THREE.SphereGeometry(2, 32, 16);
 
     material1 = new THREE.MeshPhongMaterial({ color: 0xffaa00, flatShading: true, shininess: 0 });
 
     // sound spheres
-
     const mesh1 = new THREE.Mesh(sphere, material1);
-    mesh1.position.set(- 250, 30, 0);
+    mesh1.position.set = new THREE.Vector3(0, 2, 0);
     mesh1.material.depthTest = false;
     mesh1.renderOrder = 2;
     scene.add(mesh1);
@@ -89,7 +120,7 @@ function init() {
     plane.position.y = 0.1;
     scene.add(plane);
 
-    const helper = new THREE.GridHelper(1000, 10, 0xffffff, 0xffffff);
+    const helper = new THREE.GridHelper(1000, 1000, 0xffffff, 0xffffff);
     helper.position.y = 0.1;
     helper.material.depthTest = false;
     helper.renderOrder = 1;
@@ -103,7 +134,6 @@ function init() {
     document.getElementById("home").appendChild(renderer.domElement);
 
     controls = new FirstPersonControls(camera, renderer.domElement);
-
     controls.movementSpeed = 70;
     controls.lookSpeed = 0.05;
 

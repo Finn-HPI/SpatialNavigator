@@ -13,7 +13,7 @@ class FirstPersonControls {
      */
     constructor(object, domElement = document) {
         this.object = object
-        this.target = new THREE.Vector3(0, 0, 0)
+        this.targetPosition = new THREE.Vector3(0, 2, 0)
         this.targetRotation = new Quaternion()
 
         this.domElement = domElement
@@ -54,6 +54,11 @@ class FirstPersonControls {
         this.targetRotation = quaternion;
     }
 
+    onPositionChanged(pos) {
+        console.log(this.targetPosition);
+        this.targetPosition = pos;
+    }
+
     /**
      * Update function
      * @param  {object} delta Delta
@@ -62,9 +67,7 @@ class FirstPersonControls {
         if (this.enabled === false) {
             return
         }
-
-        let actualMoveSpeed = delta * this.movementSpeed
-
+        this.object.position.lerp(this.targetPosition, 1);
         this.object.quaternion.slerp(this.targetRotation, this.lookSpeed);
     }
 
