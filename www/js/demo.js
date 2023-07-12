@@ -7,8 +7,6 @@ let analyser1;
 const clock = new THREE.Clock();
 const YAW_CORRECTION = 0
 
-let target = new THREE.Vector3(0, 0, 0)
-
 const _LatLngOrigin = [52.39351850009692, 13.131236542297362]; // Origin (0,0) of local coordinates set in front of Ulf at HPI.
 
 let metersPerLat;
@@ -63,7 +61,7 @@ function deviceRotationHandler(e) {
 function geolocationUpdated(event) {
     const crd = event.coords;
     const localPos = ConvertGPStoUCS(crd.latitude, crd.longitude);
-    document.getElementById("debug").innerHTML = `${localPos.x}, ${localPos.z}`;
+    document.getElementById("debug-coordinates").innerHTML = `x: ${localPos.x}, y: ${localPos.z}`;
     controls.onPositionChanged(localPos);
 };
 
@@ -76,9 +74,7 @@ function onError(err) {
 
 function initThreeScene() {
     camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
-    camera.position.set(0, 2, 0);
-    const pos = ConvertGPStoUCS(_LatLngOrigin[0], _LatLngOrigin[1])
-    document.getElementById("debug").innerHTML = `${pos.x}, ${pos.z}`;
+    camera.position.set(0, 2, 0); // Initial position of user (camera) is 0, 0
     const listener = new THREE.AudioListener();
     camera.add(listener);
 
