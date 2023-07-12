@@ -1,11 +1,11 @@
-let camera, controls, scene, renderer, light;
+let camera, scene, renderer, light;
 
 let material1, material2, material3;
 
 let analyser1, analyser2, analyser3;
 
 const clock = new THREE.Clock();
-const YAW_CORRECTION = 90
+const YAW_CORRECTION = 0
 
 let target = new THREE.Vector3(0, 0, 0)
 
@@ -38,11 +38,13 @@ function ConvertGPStoUCS(lat, lng) {
 }
 
 function rotationHandler(e) {
-    let yaw = (e.webkitCompassHeading || Math.abs(e.alpha) + YAW_CORRECTION) * (Math.PI / 180);
+    device_yaw = e.webkitCompassHeading || Math.abs(e.alpha) + YAW_CORRECTION
+    device_yaw %= 360;
+    let yaw = device_yaw * (Math.PI / 180);
     let q = new Quaternion();
     q.setFromEuler(0, yaw, 0, "XYZ");
     q.normalize();
-    controls.onRotationChanged(q);
+    // controls.onRotationChanged(q);
 }
 
 function onSuccess(event) {
@@ -69,12 +71,12 @@ function init() {
     scene.background = new THREE.CubeTextureLoader()
         .setPath('textures/')
         .load([
-            'front_with_north.png',
-            'south.png',
-            'up.png',
-            'down.png',
+            'east.png',
             'west.png',
-            'east.png'
+            'down.png',
+            'up.png',
+            'north.png',
+            'south.png'
         ]);
 
     // const hemiLight = new THREE.HemisphereLight(0x0000ff, 0x00ff00, 10);
@@ -92,10 +94,23 @@ function init() {
     mesh1.renderOrder = 2;
     scene.add(mesh1);
 
+    const audioCtx = new AudioContext();
+    const panner = audioCtx.createPanner();
+    // panner.panningModel = "HRTF";
+    // panner.distanceModel = "inverse";
+    // panner.refDistance = 1;
+    // panner.maxDistance = 10000;
+    // panner.rolloffFactor = 1;
+    // panner.coneInnerAngle = 360;
+    // panner.coneOuterAngle = 0;
+    // panner.coneOuterGain = 0;
+
     const sound1 = new THREE.PositionalAudio(listener);
     const audioLoader = new THREE.AudioLoader();
-    audioLoader.load('sounds/demo.ogg', function (buffer) {
+    audioLoader.load('sounds/bird.ogg', function (buffer) {
+        // sound1.panner = panner;
         sound1.setBuffer(buffer);
+        sound1.setLoop(true);
         sound1.setRefDistance(20);
         sound1.play();
     });
@@ -107,8 +122,6 @@ function init() {
     analyser1 = new THREE.AudioAnalyser(sound1, 32);
 
     // ground
-
-
     const plane = new THREE.Mesh(
         new THREE.PlaneGeometry(2000, 2000, 10, 10),
         new THREE.MeshStandardMaterial({
@@ -135,7 +148,7 @@ function init() {
 
     controls = new FirstPersonControls(camera, renderer.domElement);
     controls.movementSpeed = 70;
-    controls.lookSpeed = 0.05;
+    controls.lookSpeed = 0.15;
 
     window.addEventListener('resize', onWindowResize);
 

@@ -286,7 +286,7 @@ function euler_from_quaternion(x, y, z, w) {
     const t4 = +1.0 - 2.0 * (y * y + z * z)
     const yaw_z = Math.atan2(t3, t4)
     // roll data seems to be switched with yaw of head 
-    return { "roll": roll_x, "pitch": pitch_y, "yaw": yaw_z }
+    return { "roll": Math.degrees(roll_x), "pitch": Math.degrees(pitch_y), "yaw": Math.degrees(yaw_z) }
 }
 
 let last = null
@@ -296,7 +296,7 @@ function euler_from_quat(q) {
     let x = Math.atan2(q[3], q[0]) + Math.atan2(-q[1], q[2]);
     let y = 2 * Math.acos(Math.sqrt((q[0] * q[0] + q[3] * q[3])) / n);
     let z = Math.atan2(q[3], q[0]) - Math.atan2(-q[1], q[2]);
-    return [x, y, z];
+    return [Math.degrees(x), Math.degrees(y), Math.degrees(z)];
 }
 
 function _spatial_sensor_callback(quaternion, sensor_manager) {
@@ -305,31 +305,40 @@ function _spatial_sensor_callback(quaternion, sensor_manager) {
     let z = quaternion[2];
     let w = quaternion[3];
 
-    let rot = euler_from_quat([w, x, y, z])
-    // if (bias) {
-    //     rot[0] -= bias[0];
-    //     rot[1] -= bias[1];
-    //     rot[2] -= bias[2];
-    // }
-    const head = document.querySelector("model-viewer#head");
-    head.orientation = `${rot[1]}rad ${rot[2]}rad ${rot[0]}rad`;
-    // // head.orientation = `${rotations.yaw}rad ${rotations.pitch}rad ${rotations.roll}rad`; //almost correct
-    head.updateFraming();
+    let rotations = euler_from_quat([w, x, y, z]);
+    let yaw = rotations[0];
+    if (yaw < 0) {
+        yaw += 360;
+    }
+
+    let corrected_yaw = yaw + calibrate_diff;
+    corrected_yaw = right_bud ? corrected_yaw : -corrected_yaw;
+    let q = new Quaternion();
+    q.setFromEuler(0, corrected_yaw * (Math.PI / 180), 0, "XYZ");
+    q.normalize();
+    controls.onRotationChanged(q);
+
+    // console.log(device_yaw, calibrate_diff, yaw, corrected_yaw);
+
+
+
+    // const head = document.querySelector("model-viewer#head");
+    // head.orientation = `${0}rad ${0}0 ${yaw}deg`;
+    // // // head.orientation = `${rotations.yaw}rad ${rotations.pitch}rad ${rotations.roll}rad`; //almost correct
+    // head.updateFraming();
 
     // // console.log(head.orientation.split(' ').map(x => parseFloat(Math.degrees(x.substring(0, x.length -3)))));
-    document.getElementById("roll").innerHTML = (Math.degrees(rot[0]) | 0) + "°";
-    document.getElementById("pitch").innerHTML = (Math.degrees(rot[1]) | 0) + "°";
-    document.getElementById("yaw").innerHTML = (Math.degrees(rot[2]) | 0) + "°";
+    document.getElementById("roll").innerHTML = 0 + "°";
+    document.getElementById("pitch").innerHTML = 0 + "°";
+    document.getElementById("yaw").innerHTML = (corrected_yaw | 0) + "°";
 }
 
 document.getElementById("calibrate-btn").addEventListener("click", function () {
-    console.log("start");
-    sensor.start_gyro_cal();
+    calibrate_diff = yaw - device_yaw;
 });
 
 document.getElementById("stop-btn").addEventListener("click", function () {
-    console.log("stop");
-    sensor.stop_gyro_cal();
+    right_bud = !right_bud;
 });
 
 function onDeviceReady() {
