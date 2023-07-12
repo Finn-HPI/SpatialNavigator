@@ -1,15 +1,16 @@
 let camera, scene, renderer, light;
 
-let material1, material2, material3;
+let material1;
 
-let analyser1, analyser2, analyser3;
+let analyser1;
 
 const clock = new THREE.Clock();
 const YAW_CORRECTION = 0
 
 let target = new THREE.Vector3(0, 0, 0)
 
-const _LatLngOrigin = [52.39351850009692, 13.131236542297362];
+const _LatLngOrigin = [52.39351850009692, 13.131236542297362]; // Origin (0,0) of local coordinates set in front of Ulf at HPI.
+
 let metersPerLat;
 let metersPerLon;
 
@@ -30,6 +31,12 @@ function FindMetersPerLat(lat) // Compute lengths of degrees
     console.log(metersPerLat, metersPerLon)
 }
 
+/**
+ * Convert given lat and long coordinates to local coordinates used in three.js
+ * @param {*} lat - Latitude from device
+ * @param {*} lng - Longitude from device
+ * @returns THREE.Vector3 with `x` and `z` being the coordinates in the local coordinate system and `y = 2`.
+ */
 function ConvertGPStoUCS(lat, lng) {
     FindMetersPerLat(_LatLngOrigin[0]);
     const zPosition = metersPerLat * (lat - _LatLngOrigin[0]); //Calc current lat
@@ -37,29 +44,37 @@ function ConvertGPStoUCS(lat, lng) {
     return new THREE.Vector3(xPosition, 2, zPosition);
 }
 
-function rotationHandler(e) {
+/**
+ * Triggered when the device rotation changes.
+ */
+function deviceRotationHandler(e) {
     device_yaw = e.webkitCompassHeading || Math.abs(e.alpha) + YAW_CORRECTION
     device_yaw %= 360;
-    let yaw = device_yaw * (Math.PI / 180);
+    let yaw_radians = device_yaw * (Math.PI / 180);
     let q = new Quaternion();
-    q.setFromEuler(0, yaw, 0, "XYZ");
+    q.setFromEuler(0, yaw_radians, 0, "XYZ");
     q.normalize();
     // controls.onRotationChanged(q);
 }
 
-function onSuccess(event) {
+/**
+ * Triggered when the geolocation updates.
+ */
+function geolocationUpdated(event) {
     const crd = event.coords;
-    const pos = ConvertGPStoUCS(crd.latitude, crd.longitude);
-    document.getElementById("debug").innerHTML = `${pos.x}, ${pos.z}`;
-    controls.onPositionChanged(pos);
+    const localPos = ConvertGPStoUCS(crd.latitude, crd.longitude);
+    document.getElementById("debug").innerHTML = `${localPos.x}, ${localPos.z}`;
+    controls.onPositionChanged(localPos);
 };
 
+/**
+ * Handles any error with GPS
+ */
 function onError(err) {
     console.error(`GPS_ERROR(${err.code}): ${err.message}`);
 };
 
-
-function init() {
+function initThreeScene() {
     camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
     camera.position.set(0, 2, 0);
     const pos = ConvertGPStoUCS(_LatLngOrigin[0], _LatLngOrigin[1])
@@ -149,50 +164,44 @@ function init() {
     controls = new FirstPersonControls(camera, renderer.domElement);
     controls.movementSpeed = 70;
     controls.lookSpeed = 0.15;
+}
 
+/**
+ * Initializes the code and listeners.
+ */
+function init() {
+    initThreeScene();
     window.addEventListener('resize', onWindowResize);
-
     animate();
 
-    window.addEventListener("deviceorientationabsolute", rotationHandler, true);
-
+    // Setup GPS and Rotation handlers
+    window.addEventListener("deviceorientationabsolute", deviceRotationHandler, true);
     const options = {
         enableHighAccuracy: true,
         timeout: 5000,
         maximumAge: 0,
     };
-    navigator.geolocation.watchPosition(onSuccess, onError, options)
+    navigator.geolocation.watchPosition(geolocationUpdated, onError, options)
 }
 
 function onWindowResize() {
-
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-
     renderer.setSize(window.innerWidth, window.innerHeight);
-
     controls.handleResize();
-
 }
 
 function animate() {
-
     requestAnimationFrame(animate);
     render();
-
 }
 
 
 function render() {
-
     const delta = clock.getDelta();
-
     controls.update(delta);
-
     material1.emissive.b = analyser1.getAverageFrequency() / 256;
-
     renderer.render(scene, camera);
-
 }
 
 document.addEventListener('deviceready', init, false);
