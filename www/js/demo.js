@@ -105,27 +105,17 @@ function initThreeScene() {
     mesh1.renderOrder = 2;
     scene.add(mesh1);
 
-    const audioCtx = new AudioContext();
-    const panner = audioCtx.createPanner();
-    // panner.panningModel = "HRTF";
-    // panner.distanceModel = "inverse";
-    // panner.refDistance = 1;
-    // panner.maxDistance = 10000;
-    // panner.rolloffFactor = 1;
-    // panner.coneInnerAngle = 360;
-    // panner.coneOuterAngle = 0;
-    // panner.coneOuterGain = 0;
-
     const sound1 = new THREE.PositionalAudio(listener);
     const audioLoader = new THREE.AudioLoader();
     audioLoader.load('sounds/bird.ogg', function (buffer) {
-        // sound1.panner = panner;
+        sound1.panner.panningModel = "HRTF";
         sound1.setBuffer(buffer);
+        sound1.rolloffFactor = 0.5;
+        sound1.setRefDistance(1);
         sound1.setLoop(true);
-        sound1.setRefDistance(20);
         sound1.play();
     });
-
+    console.log("Panner ", sound1.panner);
     mesh1.add(sound1);
 
     // analysers
@@ -158,6 +148,7 @@ function initThreeScene() {
     document.getElementById("home").appendChild(renderer.domElement);
 
     controls = new FirstPersonControls(camera, renderer.domElement);
+    controls.targetPosition = new THREE.Vector3(50, 2, 10)
     controls.movementSpeed = 70;
     controls.lookSpeed = 0.15;
 }
