@@ -1,16 +1,20 @@
-let camera, scene, renderer, light;
+let camera, scene, renderer, light, line, listener;
 
 let material1;
 
 let analyser1;
 
 const clock = new THREE.Clock();
-const YAW_CORRECTION = 0
+const YAW_CORRECTION = +90
 
 const _LatLngOrigin = [52.39351850009692, 13.131236542297362]; // Origin (0,0) of local coordinates set in front of Ulf at HPI.
 
 let metersPerLat;
 let metersPerLon;
+
+const waypoints = [[0, 200]];
+let current_waypoint = 0
+let current_waypoint_pos
 
 function FindMetersPerLat(lat) // Compute lengths of degrees
 {
@@ -46,12 +50,19 @@ function ConvertGPStoUCS(lat, lng) {
  * Triggered when the device rotation changes.
  */
 function deviceRotationHandler(e) {
-    device_yaw = e.webkitCompassHeading || Math.abs(e.alpha) + YAW_CORRECTION
-    device_yaw %= 360;
+    const absolute = event.absolute;
+    const alpha = event.alpha;
+    const beta = event.beta;
+    const gamma = event.gamma;
+    let compass = -(alpha + beta * gamma / 90);
+    compass -= Math.floor(compass / 360) * 360;
+
+    device_yaw = compass;
     let yaw_radians = device_yaw * (Math.PI / 180);
     let q = new Quaternion();
     q.setFromEuler(0, yaw_radians, 0, "XYZ");
     q.normalize();
+    // console.log(e.alpha);
     // controls.onRotationChanged(q);
 }
 
@@ -59,11 +70,88 @@ function deviceRotationHandler(e) {
  * Triggered when the geolocation updates.
  */
 function geolocationUpdated(event) {
-    const crd = event.coords;
-    const localPos = ConvertGPStoUCS(crd.latitude, crd.longitude);
-    document.getElementById("debug-coordinates").innerHTML = `x: ${localPos.x}, y: ${localPos.z}`;
-    controls.onPositionChanged(localPos);
+    // const crd = event.coords;
+    // const localPos = ConvertGPStoUCS(crd.latitude, crd.longitude);
+    // document.getElementById("debug-coordinates").innerHTML = `x: ${localPos.x.toFixed(2)}, y: ${localPos.z.toFixed(2)}, dist: ${localPos.distanceTo(current_waypoint_pos.toFixed(2))}`;
+    // controls.onPositionChanged(localPos);
+
+    // if (localPos.distanceTo(current_waypoint_pos) < 5) { // 5 meter radius
+    //     if (current_waypoint_pos < waypoints.length - 1) {
+    //         current_waypoint++;
+    //         current_waypoint_pos = ConvertGPStoUCS(waypoints[current_waypoint][0], waypoints[current_waypoint][1]);
+    //         waypoint.position.set(current_waypoint_pos.x, current_waypoint.y, current_waypoint.z);
+
+    //         // play ping sound
+    //         const sound = new THREE.Audio(listener);
+    //         const audioLoader = new THREE.AudioLoader();
+    //         audioLoader.load('sounds/ping.mp3', function (buffer) {
+    //             sound.setBuffer(buffer);
+    //             sound.setLoop(true);
+    //             sound.setVolume(0.5);
+    //             sound.play();
+    //         });
+    //     } else if (current_waypoint == waypoint.length - 1) {
+    //         // play finished sound
+    //         const sound = new THREE.Audio(listener);
+    //         const audioLoader = new THREE.AudioLoader();
+    //         audioLoader.load('sounds/headtracking.mp3', function (buffer) {
+    //             sound.setBuffer(buffer);
+    //             sound.setLoop(true);
+    //             sound.setVolume(0.5);
+    //             sound.play();
+    //         });
+    //     }
+    // }
 };
+
+var last = -1;
+var last_bird = -1
+const ping_interval = 10;
+const bird_interval = 20;
+
+(function loop() {
+    setTimeout(function () {
+        controls.targetPosition.x += 1;
+        const dist = controls.targetPosition.distanceTo(current_waypoint_pos);
+
+        document.getElementById("debug-coordinates").innerHTML = `x: ${controls.targetPosition.x}, y: ${controls.targetPosition.z}, dist: ${dist}`;
+        var step = Math.floor(dist / ping_interval);
+        var step_bird = Math.floor(dist / bird_interval);
+
+        var vec = controls.targetPosition.copy();
+        THREE.Vector3
+        if (last_bird == -1) {
+            console.log("initial set");
+            last_bird = step_bird;
+            // var new_pos = vec.multiplyScalar(step_bird);
+            // camera.position.set(new_pos.x, new_pos.y, new_pos.z);
+        }
+        if (step_bird != last_bird) {
+            last_bird = step_bird;
+            // var new_pos = vec.multiplyScalar(step_bird);
+            // camera.position.set(new_pos.x, new_pos.y, new_pos.z);
+            console.log("update pos", vec)
+        }
+
+        if (last == -1) {
+            last = step;
+        }
+        if (step != last) {
+            last = step;
+            // console.log("ping");
+            const sound = new THREE.Audio(listener);
+            const audioLoader = new THREE.AudioLoader();
+            audioLoader.load('sounds/ping.mp3', function (buffer) {
+                sound.setBuffer(buffer);
+                // sound.setLoop(true);
+                sound.setVolume(0.01);
+                sound.detune = -step * 1200;
+                sound.play();
+            });
+        }
+        loop()
+    }, 200);
+}());
 
 /**
  * Handles any error with GPS
@@ -75,50 +163,48 @@ function onError(err) {
 function initThreeScene() {
     camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
     camera.position.set(0, 2, 0); // Initial position of user (camera) is 0, 0
-    const listener = new THREE.AudioListener();
+    listener = new THREE.AudioListener();
     camera.add(listener);
 
     scene = new THREE.Scene();
     scene.background = new THREE.CubeTextureLoader()
         .setPath('textures/')
         .load([
-            'east.png',
-            'west.png',
-            'down.png',
-            'up.png',
-            'north.png',
-            'south.png'
+            'west.png', // +x
+            'east.png', // -x
+            'up.png', // +y
+            'down.png', // -y
+            'south.png', // +z
+            'north.png' // -z
         ]);
-
-    // const hemiLight = new THREE.HemisphereLight(0x0000ff, 0x00ff00, 10);
-    // scene.add(hemiLight);
     const light = new THREE.HemisphereLight(0xffffbb, 0x41980a, 1.5);
     scene.add(light);
     const sphere = new THREE.SphereGeometry(2, 32, 16);
 
     material1 = new THREE.MeshPhongMaterial({ color: 0xffaa00, flatShading: true, shininess: 0 });
 
-    // sound spheres
-    const mesh1 = new THREE.Mesh(sphere, material1);
-    mesh1.position.set = new THREE.Vector3(0, 2, 0);
-    mesh1.material.depthTest = false;
-    mesh1.renderOrder = 2;
-    scene.add(mesh1);
+    // waypoint sphere sound source
+    current_waypoint_pos = new THREE.Vector3(200, 2, 0);
+
+    const waypoint = new THREE.Mesh(sphere, material1);
+    console.log(current_waypoint_pos.x, current_waypoint.y, current_waypoint.z);
+    waypoint.position.set(current_waypoint_pos.x, current_waypoint_pos.y, current_waypoint_pos.z);
+    waypoint.material.depthTest = false;
+    waypoint.renderOrder = 2;
+    scene.add(waypoint);
 
     const sound1 = new THREE.PositionalAudio(listener);
     const audioLoader = new THREE.AudioLoader();
     audioLoader.load('sounds/bird.ogg', function (buffer) {
         sound1.panner.panningModel = "HRTF";
         sound1.setBuffer(buffer);
-        sound1.rolloffFactor = 0.5;
+        sound1.setRolloffFactor(0.2);
         sound1.setRefDistance(1);
         sound1.setLoop(true);
+        sound1.setVolume(1.0);
         sound1.play();
     });
-    console.log("Panner ", sound1.panner);
-    mesh1.add(sound1);
-
-    // analysers
+    waypoint.add(sound1);
 
     analyser1 = new THREE.AudioAnalyser(sound1, 32);
 
@@ -128,6 +214,7 @@ function initThreeScene() {
         new THREE.MeshStandardMaterial({
             color: 0x41980a,
         }));
+
     plane.castShadow = false;
     plane.receiveShadow = true;
     plane.rotation.x = -Math.PI / 2;
@@ -148,7 +235,7 @@ function initThreeScene() {
     document.getElementById("home").appendChild(renderer.domElement);
 
     controls = new FirstPersonControls(camera, renderer.domElement);
-    controls.targetPosition = new THREE.Vector3(50, 2, 10)
+    controls.targetPosition = new THREE.Vector3(0, 2, 0)
     controls.movementSpeed = 70;
     controls.lookSpeed = 0.15;
 }

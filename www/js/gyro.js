@@ -299,6 +299,7 @@ function euler_from_quat(q) {
     return [Math.degrees(x), Math.degrees(y), Math.degrees(z)];
 }
 
+let bud_yaw = 0;
 function _spatial_sensor_callback(quaternion, sensor_manager) {
     let x = quaternion[0];
     let y = quaternion[1];
@@ -306,19 +307,19 @@ function _spatial_sensor_callback(quaternion, sensor_manager) {
     let w = quaternion[3];
 
     let rotations = euler_from_quat([w, x, y, z]);
-    let yaw = rotations[0];
-    if (yaw < 0) {
-        yaw += 360;
+    bud_yaw = rotations[0];
+    if (bud_yaw < 0) {
+        bud_yaw += 360;
     }
+    bud_yaw = right_bud ? bud_yaw : -bud_yaw;
 
-    let corrected_yaw = yaw + calibrate_diff;
-    corrected_yaw = right_bud ? corrected_yaw : -corrected_yaw;
+    let corrected_yaw = bud_yaw - calibrate_diff;
     let q = new Quaternion();
     q.setFromEuler(0, corrected_yaw * (Math.PI / 180), 0, "XYZ");
     q.normalize();
     controls.onRotationChanged(q);
 
-    // console.log(device_yaw, calibrate_diff, yaw, corrected_yaw);
+    // console.log(calibrate_diff, bud_yaw, corrected_yaw);
 
 
 
@@ -334,7 +335,7 @@ function _spatial_sensor_callback(quaternion, sensor_manager) {
 }
 
 document.getElementById("calibrate-btn").addEventListener("click", function () {
-    calibrate_diff = yaw - device_yaw;
+    calibrate_diff = bud_yaw;
 });
 
 document.getElementById("stop-btn").addEventListener("click", function () {
