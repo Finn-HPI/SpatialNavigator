@@ -1,3 +1,5 @@
+// Original code: https://github.com/ThePBone/BudsPro-Headtracking
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -47,8 +49,6 @@ function crc16_ccitt(data) {
     }
     return 65535 & i2
 }
-
-
 class BluetoothService {
     constructor(socket_id, message_callback = NamedNodeMap) {
         // Constants
@@ -111,16 +111,11 @@ class BluetoothService {
         for (let i = 0; i < payload.length; ++i) {
             b[4 + i] = payload[i];
         }
-        // b[4:4 + payload.length] = payload
-
-        // crc_data = bytearray(this._size(payload.length) - this.MSG_SIZE_CRC);
         let crc_data = new Uint8Array(this._size(payload.length) - this.MSG_SIZE_CRC);
         crc_data[0] = msg_id;
         for (let i = 0; i < payload.length; ++i) {
             crc_data[1 + i] = payload[i];
         }
-        // crc_data[1:1 + payload.length] = payload
-
         let crc16 = crc16_ccitt(crc_data);
         b[payload.length + 4] = crc16 & 255;
         b[payload.length + 5] = (crc16 >> 8) & 255;
@@ -226,14 +221,11 @@ class SpatialSensorManager {
                 } else {
                     console.log("2SpatialAudioDataParser.Gyrocal: Bias:", iArr);
                 }
-
-                // GyrocalBias = list.ToArray();
             }
             else if (event == this.DID_BUDGRV) {
                 let payload = data.slice(5, data.length - 3);
                 let input = payload.slice(0, -1);
                 if (input.length == 8) {
-                    // console.log(payload);
                     const view = new Int16Array(input.buffer);
                     const quaternion = [
                         view[0] / 10000,
@@ -241,7 +233,6 @@ class SpatialSensorManager {
                         view[2] / 10000,
                         view[3] / 10000
                     ];
-                    // console.log(quaternion);
                     if (this.data_cb != null) {
                         this.data_cb(quaternion, this);
                     }
@@ -255,40 +246,11 @@ class SpatialSensorManager {
 // See https://cordova.apache.org/docs/en/latest/cordova/events/events.html#deviceready
 document.addEventListener('deviceready', onDeviceReady, false);
 
-sensor = null
-last_rotations = null
-base_rotations = null
-
-
-last_quarternion = null;
-inverted = null
-
-up = null
-down = null
-
-yaw_correction = null
-
 Math.degrees = function (radians) {
     return radians * 180 / Math.PI;
 }
 
-function euler_from_quaternion(x, y, z, w) {
-    const t0 = +2.0 * (w * x + y * z);
-    const t1 = +1.0 - 2.0 * (x * x + y * y);
-    const roll_x = Math.atan2(t0, t1);
-
-    let t2 = +2.0 * (w * y - z * x);
-    t2 = t2 > +1.0 ? +1.0 : t2;
-    t2 = t2 < -1.0 ? -1.0 : t2;
-    const pitch_y = Math.asin(t2)
-
-    const t3 = +2.0 * (w * z + x * y)
-    const t4 = +1.0 - 2.0 * (y * y + z * z)
-    const yaw_z = Math.atan2(t3, t4)
-    // roll data seems to be switched with yaw of head 
-    return { "roll": Math.degrees(roll_x), "pitch": Math.degrees(pitch_y), "yaw": Math.degrees(yaw_z) }
-}
-
+let sensor = null
 let last = null
 
 function euler_from_quat(q) {
@@ -319,16 +281,11 @@ function _spatial_sensor_callback(quaternion, sensor_manager) {
     q.normalize();
     controls.onRotationChanged(q);
 
-    // console.log(calibrate_diff, bud_yaw, corrected_yaw);
-
-
-
     // const head = document.querySelector("model-viewer#head");
     // head.orientation = `${0}rad ${0}0 ${yaw}deg`;
     // // // head.orientation = `${rotations.yaw}rad ${rotations.pitch}rad ${rotations.roll}rad`; //almost correct
     // head.updateFraming();
 
-    // // console.log(head.orientation.split(' ').map(x => parseFloat(Math.degrees(x.substring(0, x.length -3)))));
     document.getElementById("roll").innerHTML = 0 + "°";
     document.getElementById("pitch").innerHTML = 0 + "°";
     document.getElementById("yaw").innerHTML = (corrected_yaw | 0) + "°";

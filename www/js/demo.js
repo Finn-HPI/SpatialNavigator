@@ -1,4 +1,4 @@
-let camera, scene, renderer, light, line, listener, waypoint;
+let camera, scene, renderer, light, line, listener, waypoint, sound;
 
 let material1;
 
@@ -12,7 +12,7 @@ const _LatLngOrigin = [52.39351850009692, 13.131236542297362]; // Origin (0,0) o
 let metersPerLat;
 let metersPerLon;
 
-const waypoints = [[0, 200]];
+const waypoints = [[0, 2000]];
 let current_waypoint = 0
 let current_waypoint_pos
 
@@ -104,64 +104,74 @@ function geolocationUpdated(event) {
     // }
 };
 
-var last = -1;
+var last_ping = -1;
 var last_bird = -1
+var flight_dist = 10
 const ping_interval = 10;
 const bird_interval = 50;
+
+var waypoint_target_pos = new THREE.Vector3(0, 0, 0);
 
 (function loop() {
     setTimeout(function () {
         controls.targetPosition.x += 1;
         const dist = controls.targetPosition.distanceTo(current_waypoint_pos);
-        const altered_dist = Math.max(0, dist - 2);
+        const altered_dist = Math.max(0, dist - flight_dist);
         document.getElementById("debug-coordinates").innerHTML = `x: ${controls.targetPosition.x}, y: ${controls.targetPosition.z}, dist: ${dist}`;
-        var step = Math.floor(altered_dist / ping_interval);
+
+        var step_ping = Math.floor(altered_dist / ping_interval);
         var step_bird = Math.floor(altered_dist / bird_interval);
 
-        var wtf = new THREE.Vector3();
-        wtf.copy(controls.targetPosition).sub(current_waypoint_pos).normalize();
-        // console.log(vec);
+        var distance_vector = new THREE.Vector3();
+        distance_vector.copy(controls.targetPosition).sub(current_waypoint_pos).normalize();
+
         if (last_bird == -1) {
             console.log("initial set");
             last_bird = step_bird;
 
-            wtf.multiplyScalar(step_bird * bird_interval);
+            distance_vector.multiplyScalar(step_bird * bird_interval);
             var new_pos = new THREE.Vector3(0, 0, 0);
             new_pos.copy(current_waypoint_pos);
-            new_pos.add(wtf);
-            waypoint.position.set(new_pos.x, new_pos.y, new_pos.z);
-            console.log("set", wtf);
+            new_pos.add(distance_vector);
+            waypoint_target_pos.set(new_pos.x, new_pos.y, new_pos.z);
+
+            console.log("set", distance_vector);
         }
         if (step_bird != last_bird) {
             last_bird = step_bird;
 
-            wtf.multiplyScalar(step_bird * bird_interval);
+            distance_vector.multiplyScalar(step_bird * bird_interval);
             var new_pos = new THREE.Vector3(0, 0, 0);
             new_pos.copy(current_waypoint_pos);
-            new_pos.add(wtf);
-            waypoint.position.set(new_pos.x, new_pos.y, new_pos.z);
-            console.log("set", wtf);
+            new_pos.add(distance_vector);
+            waypoint_target_pos.set(new_pos.x, new_pos.y, new_pos.z);
+            console.log("set", distance_vector);
         }
 
-        if (last == -1) {
-            last = step;
+        if (last_ping == -1) {
+            last_ping = step_ping;
         }
-        if (step != last) {
-            last = step;
-            // console.log("ping");
+        if (step_ping != last_ping) {
+            last_ping = step_ping;
             const sound = new THREE.Audio(listener);
             const audioLoader = new THREE.AudioLoader();
             audioLoader.load('sounds/ping.mp3', function (buffer) {
                 sound.setBuffer(buffer);
-                // sound.setLoop(true);
                 sound.setVolume(0.01);
-                sound.detune = -step * 1200;
+                sound.detune = -step_ping * 1200;
                 sound.play();
             });
         }
         loop()
     }, 200);
 }());
+
+function update(delta) {
+    if (waypoint_target_pos) {
+        console.log(waypoint_target_pos);
+        waypoint.position.lerp(waypoint_target_pos, 0.05);
+    }
+}
 
 /**
  * Handles any error with GPS
@@ -194,7 +204,7 @@ function initThreeScene() {
     material1 = new THREE.MeshPhongMaterial({ color: 0xffaa00, flatShading: true, shininess: 0 });
 
     // waypoint sphere sound source
-    current_waypoint_pos = new THREE.Vector3(200, 2, 0);
+    current_waypoint_pos = new THREE.Vector3(400, 2, 0);
 
     waypoint = new THREE.Mesh(sphere, material1);
     console.log(current_waypoint_pos.x, current_waypoint.y, current_waypoint.z);
@@ -203,21 +213,20 @@ function initThreeScene() {
     waypoint.renderOrder = 2;
     scene.add(waypoint);
 
-    const sound1 = new THREE.PositionalAudio(listener);
+    sound = new THREE.PositionalAudio(listener);
     const audioLoader = new THREE.AudioLoader();
-    audioLoader.load('sounds/bird.ogg', function (buffer) {
-        sound1.panner.panningModel = "HRTF";
-        sound1.setBuffer(buffer);
-        sound1.setRefDistance(10);
-        sound1.setRolloffFactor(1);
-        sound1.setLoop(true);
-        sound1.setVolume(1.0);
-        sound1.play();
+    audioLoader.load('sounds/' + main_sound_src, function (buffer) {
+        sound.panner.panningModel = "HRTF";
+        sound.setBuffer(buffer);
+        sound.setRefDistance(10);
+        sound.setRolloffFactor(1);
+        sound.setLoop(true);
+        sound.setVolume(1.0);
+        sound.play();
     });
-    console.log(sound1.panner.distanceModel, sound1.panner.refDistance, sound1.panner.rolloffFactor);
-    waypoint.add(sound1);
+    waypoint.add(sound);
 
-    analyser1 = new THREE.AudioAnalyser(sound1, 32);
+    analyser1 = new THREE.AudioAnalyser(sound, 32);
 
     // ground
     const plane = new THREE.Mesh(
@@ -269,6 +278,33 @@ function init() {
     navigator.geolocation.watchPosition(geolocationUpdated, onError, options)
 }
 
+// var sound_button = document.getElementById("sound-btn");
+// sound_button.addEventListener("click", function () {
+//     if (sound_button.innerText == "Bird") {
+//         sound_button.innerText = "Water"
+//         main_sound_src = "water.ogg";
+//     } else {
+//         sound_button.innerText == "Bird"
+//         main_sound_src = "bird.ogg";
+//     }
+//     waypoint.remove(sound);
+//     sound.stop();
+//     sound = new THREE.PositionalAudio(listener);
+//     const audioLoader = new THREE.AudioLoader();
+//     audioLoader.load('sounds/' + main_sound_src, function (buffer) {
+//         sound.panner.panningModel = "HRTF";
+//         sound.setBuffer(buffer);
+//         sound.setRefDistance(10);
+//         sound.setRolloffFactor(1);
+//         sound.setLoop(true);
+//         sound.setVolume(1.0);
+//         sound.play();
+//     });
+//     waypoint.add(sound);
+//     console.log(main_sound_src)
+// });
+
+
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
@@ -285,6 +321,7 @@ function animate() {
 function render() {
     const delta = clock.getDelta();
     controls.update(delta);
+    update(delta);
     material1.emissive.b = analyser1.getAverageFrequency() / 256;
     renderer.render(scene, camera);
 }
