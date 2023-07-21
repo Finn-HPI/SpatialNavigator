@@ -13,7 +13,7 @@ const _LatLngOrigin = [52.393969855927274, 13.132982520764921]; // Origin (0,0) 
 let metersPerLat;
 let metersPerLon;
 
-const target = [[52.393941463488424, 13.132414326894185]];
+const target = [52.393941463488424, 13.132414326894185];
 let current_waypoint = 0
 let current_waypoint_pos
 
@@ -31,7 +31,6 @@ function FindMetersPerLat(lat) // Compute lengths of degrees
     // Calculate the length of a degree of latitude and longitude in meters
     metersPerLat = m1 + (m2 * Math.cos(2 * lat)) + (m3 * Math.cos(4 * lat)) + (m4 * Math.cos(6 * lat));
     metersPerLon = (p1 * Math.cos(lat)) + (p2 * Math.cos(3 * lat)) + (p3 * Math.cos(5 * lat));
-    // console.log(metersPerLat, metersPerLon)
 }
 
 /**
@@ -123,8 +122,7 @@ function geolocationUpdated(event) {
     var step_bird = Math.floor(altered_dist / bird_interval);
 
     var distance_vector = new THREE.Vector3();
-    distance_vector.copy(controls.position).sub(current_waypoint_pos);
-    console.log("dist", distance_vector);
+    distance_vector.copy(controls.targetPosition).sub(current_waypoint_pos);
     distance_vector.normalize();
 
     // Bird sound movement
@@ -217,8 +215,6 @@ function initThreeScene() {
 
     // waypoint sphere sound source
     current_waypoint_pos = ConvertGPStoUCS(target[0], target[1]);
-    // current_waypoint_pos = ConvertGPStoUCS(52.39421780602752, 13.133049949018309);
-
     waypoint = new THREE.Mesh(sphere, material1);
     waypoint.position.set(current_waypoint_pos.x, current_waypoint_pos.y, current_waypoint_pos.z);
     waypoint.material.depthTest = false;
@@ -289,33 +285,6 @@ function init() {
     };
     navigator.geolocation.watchPosition(geolocationUpdated, onError, options)
 }
-
-// var sound_button = document.getElementById("sound-btn");
-// sound_button.addEventListener("click", function () {
-//     if (sound_button.innerText == "Bird") {
-//         sound_button.innerText = "Water"
-//         main_sound_src = "water.ogg";
-//     } else {
-//         sound_button.innerText == "Bird"
-//         main_sound_src = "bird.ogg";
-//     }
-//     waypoint.remove(sound);
-//     sound.stop();
-//     sound = new THREE.PositionalAudio(listener);
-//     const audioLoader = new THREE.AudioLoader();
-//     audioLoader.load('sounds/' + main_sound_src, function (buffer) {
-//         sound.panner.panningModel = "HRTF";
-//         sound.setBuffer(buffer);
-//         sound.setRefDistance(10);
-//         sound.setRolloffFactor(1);
-//         sound.setLoop(true);
-//         sound.setVolume(1.0);
-//         sound.play();
-//     });
-//     waypoint.add(sound);
-//     console.log(main_sound_src)
-// });
-
 
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
