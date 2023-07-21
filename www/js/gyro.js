@@ -263,6 +263,8 @@ function euler_from_quat(q) {
 
 let bud_yaw = 0;
 function _spatial_sensor_callback(quaternion, sensor_manager) {
+    if (use_device_orientation) return;
+    
     let x = quaternion[0];
     let y = quaternion[1];
     let z = quaternion[2];
@@ -279,7 +281,7 @@ function _spatial_sensor_callback(quaternion, sensor_manager) {
     let q = new Quaternion();
     q.setFromEuler(0, corrected_yaw * (Math.PI / 180), 0, "XYZ");
     q.normalize();
-    // controls.onRotationChanged(q);
+    controls.onRotationChanged(q);
 
     // const head = document.querySelector("model-viewer#head");
     // head.orientation = `${0}rad ${0}0 ${yaw}deg`;

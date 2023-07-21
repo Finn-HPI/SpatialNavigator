@@ -8,12 +8,12 @@ let analyser1;
 const clock = new THREE.Clock();
 const YAW_CORRECTION = +90
 
-const _LatLngOrigin = [52.3926785717412, 13.129885611884978]; // Origin (0,0) of local coordinates set in front of Ulf at HPI.
+const _LatLngOrigin = [52.393969855927274, 13.132982520764921]; // Origin (0,0) of local coordinates set in front of Ulf at HPI.
 
 let metersPerLat;
 let metersPerLon;
 
-const waypoints = [[52.39265036231587, 13.12909942009715]];
+const waypoints = [[52.393941463488424, 13.132414326894185]];
 let current_waypoint = 0
 let current_waypoint_pos
 
@@ -51,23 +51,18 @@ function ConvertGPStoUCS(lat, lng) {
  * Triggered when the device rotation changes.
  */
 function deviceRotationHandler(event) {
+    if (!use_device_orientation) return;
+
     const absolute = event.absolute;
     const alpha = event.alpha;
     const beta = event.beta;
     const gamma = event.gamma;
     compass = -(alpha + beta * gamma / 90);
     compass -= Math.floor(compass / 360) * 360; // Map value to [0, 360]
-
-    // document.getElementById("compass").style.transform = `rotate(${-compass}deg)`;
-    // document.getElementById("compassCorrected").style.transform = `rotate(${-(compass + compassCorrection)}deg)`;
-
-    // const debugElement = document.getElementById("deviceRotation");
-    // debugElement.innerHTML = `Compass: ${compass.toFixed(2)}, Alpha: ${alpha.toFixed(2)}, corrected: ${(compass + compassCorrection).toFixed(2)}`;
     let q = new Quaternion();
-    // console.log(compass - compassCorrection, waypoint.position);
     q.setFromEuler(0, -(compass - compassCorrection) * (Math.PI / 180), 0, "XYZ");
     q.normalize();
-    // console.log(e.alpha);
+
     controls.onRotationChanged(q);
 }
 
@@ -80,7 +75,7 @@ var last_ping = -1;
 var last_bird = -1
 var flight_dist = 10
 const ping_interval = 10;
-const bird_interval = 50;
+const bird_interval = 75;
 
 var waypoint_target_pos = ConvertGPStoUCS(waypoints[0][0], waypoints[0][1]);
 
@@ -100,7 +95,7 @@ function geolocationUpdated(event) {
     var step_bird = Math.floor(altered_dist / bird_interval);
 
     var distance_vector = new THREE.Vector3();
-    distance_vector.copy(controls.targetPosition).sub(current_waypoint_pos);
+    distance_vector.copy(controls.position).sub(current_waypoint_pos);
     console.log("dist", distance_vector);
     distance_vector.normalize();
 
@@ -132,13 +127,23 @@ function geolocationUpdated(event) {
     if (last_ping == -1) {
         last_ping = step_ping;
     }
-    if (step_ping != last_ping) {
+    if (step_ping < last_ping) {
         last_ping = step_ping;
         const sound = new THREE.Audio(listener);
         const audioLoader = new THREE.AudioLoader();
         audioLoader.load('sounds/ping.mp3', function (buffer) {
             sound.setBuffer(buffer);
             sound.setVolume(0.01);
+            sound.detune = -step_ping * 1200;
+            sound.play();
+        });
+    } else if (step_ping > last_ping) {
+        last_ping = step_ping;
+        const sound = new THREE.Audio(listener);
+        const audioLoader = new THREE.AudioLoader();
+        audioLoader.load('sounds/water_splash.mp3', function (buffer) {
+            sound.setBuffer(buffer);
+            sound.setVolume(0.05);
             sound.detune = -step_ping * 1200;
             sound.play();
         });
