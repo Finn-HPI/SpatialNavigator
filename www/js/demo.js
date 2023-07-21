@@ -13,7 +13,7 @@ const _LatLngOrigin = [52.393969855927274, 13.132982520764921]; // Origin (0,0) 
 let metersPerLat;
 let metersPerLon;
 
-const waypoints = [[52.393941463488424, 13.132414326894185]];
+const target = [[52.393941463488424, 13.132414326894185]];
 let current_waypoint = 0
 let current_waypoint_pos
 
@@ -70,6 +70,34 @@ document.getElementById("calibrate-btn").addEventListener("click", function () {
     compassCorrection = compass;
 });
 
+// Setup button to load coordinates from clipboard.
+document.getElementById("loadCoordinates").addEventListener("click", loadCoordinatesFromClipboard);
+
+/**
+ * Checks the clipboard for coordinates and takes them as the new target location if they exist
+ */
+function loadCoordinatesFromClipboard() {
+    navigator.clipboard.readText().then((clipboardText) => {
+        const match = clipboardText.match(/^([1-8]?\d(\.\d+)?|90(\.0+)?),\s*(((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/)
+        if (match) { // If clipboard contains coordinates
+            const lat = match[1];
+            const long = match[4];
+            console.log("Successfully loaded from clipboard:", [lat, long]);
+            changeTargetPosition(lat, long);
+        } else { // Warn in console if it doesn't contain coordinates
+            console.warn("clipboard doesn't contain regex: ", clipboardText);
+        }
+        }).catch(e => console.warn("Error reading from clipboard:", e));
+}
+
+/**
+ * Changes the position of the target based on GPS coordinates
+ */
+function changeTargetPosition(latitude, longitude) {
+    target = [latitude, longitude];
+    const local_coordinates = ConvertGPStoUCS(latitude, longitude);
+}
+
 
 var last_ping = -1;
 var last_bird = -1
@@ -77,7 +105,7 @@ var flight_dist = 10
 const ping_interval = 10;
 const bird_interval = 75;
 
-var waypoint_target_pos = ConvertGPStoUCS(waypoints[0][0], waypoints[0][1]);
+var waypoint_target_pos = ConvertGPStoUCS(target[0], target[1]);
 
 /**
  * Triggered when the geolocation updates.
@@ -188,7 +216,7 @@ function initThreeScene() {
     material1 = new THREE.MeshPhongMaterial({ color: 0xffaa00, flatShading: true, shininess: 0 });
 
     // waypoint sphere sound source
-    current_waypoint_pos = ConvertGPStoUCS(waypoints[0][0], waypoints[0][1]);
+    current_waypoint_pos = ConvertGPStoUCS(target[0], target[1]);
     // current_waypoint_pos = ConvertGPStoUCS(52.39421780602752, 13.133049949018309);
 
     waypoint = new THREE.Mesh(sphere, material1);
