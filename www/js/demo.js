@@ -1,18 +1,19 @@
 let camera, scene, renderer, light, line, listener, waypoint, sound;
 
 let material1;
+let compass = 0;
 
 let analyser1;
 
 const clock = new THREE.Clock();
 const YAW_CORRECTION = +90
 
-const _LatLngOrigin = [52.39351850009692, 13.131236542297362]; // Origin (0,0) of local coordinates set in front of Ulf at HPI.
+const _LatLngOrigin = [52.3926785717412, 13.129885611884978]; // Origin (0,0) of local coordinates set in front of Ulf at HPI.
 
 let metersPerLat;
 let metersPerLon;
 
-const waypoints = [[0, 2000]];
+const waypoints = [[52.39265036231587, 13.12909942009715]];
 let current_waypoint = 0
 let current_waypoint_pos
 
@@ -30,7 +31,7 @@ function FindMetersPerLat(lat) // Compute lengths of degrees
     // Calculate the length of a degree of latitude and longitude in meters
     metersPerLat = m1 + (m2 * Math.cos(2 * lat)) + (m3 * Math.cos(4 * lat)) + (m4 * Math.cos(6 * lat));
     metersPerLon = (p1 * Math.cos(lat)) + (p2 * Math.cos(3 * lat)) + (p3 * Math.cos(5 * lat));
-    console.log(metersPerLat, metersPerLon)
+    // console.log(metersPerLat, metersPerLon)
 }
 
 /**
@@ -43,66 +44,37 @@ function ConvertGPStoUCS(lat, lng) {
     FindMetersPerLat(_LatLngOrigin[0]);
     const zPosition = metersPerLat * (lat - _LatLngOrigin[0]); //Calc current lat
     const xPosition = metersPerLon * (lng - _LatLngOrigin[1]); //Calc current lat
-    return new THREE.Vector3(xPosition, 2, zPosition);
+    return new THREE.Vector3(xPosition, 2, -zPosition);
 }
 
 /**
  * Triggered when the device rotation changes.
  */
-function deviceRotationHandler(e) {
+function deviceRotationHandler(event) {
     const absolute = event.absolute;
     const alpha = event.alpha;
     const beta = event.beta;
     const gamma = event.gamma;
-    let compass = -(alpha + beta * gamma / 90);
-    compass -= Math.floor(compass / 360) * 360;
+    compass = -(alpha + beta * gamma / 90);
+    compass -= Math.floor(compass / 360) * 360; // Map value to [0, 360]
 
-    device_yaw = compass;
-    let yaw_radians = device_yaw * (Math.PI / 180);
+    // document.getElementById("compass").style.transform = `rotate(${-compass}deg)`;
+    // document.getElementById("compassCorrected").style.transform = `rotate(${-(compass + compassCorrection)}deg)`;
+
+    // const debugElement = document.getElementById("deviceRotation");
+    // debugElement.innerHTML = `Compass: ${compass.toFixed(2)}, Alpha: ${alpha.toFixed(2)}, corrected: ${(compass + compassCorrection).toFixed(2)}`;
     let q = new Quaternion();
-    q.setFromEuler(0, yaw_radians, 0, "XYZ");
+    // console.log(compass - compassCorrection, waypoint.position);
+    q.setFromEuler(0, -(compass - compassCorrection) * (Math.PI / 180), 0, "XYZ");
     q.normalize();
     // console.log(e.alpha);
-    // controls.onRotationChanged(q);
+    controls.onRotationChanged(q);
 }
 
-/**
- * Triggered when the geolocation updates.
- */
-function geolocationUpdated(event) {
-    // const crd = event.coords;
-    // const localPos = ConvertGPStoUCS(crd.latitude, crd.longitude);
-    // document.getElementById("debug-coordinates").innerHTML = `x: ${localPos.x.toFixed(2)}, y: ${localPos.z.toFixed(2)}, dist: ${localPos.distanceTo(current_waypoint_pos.toFixed(2))}`;
-    // controls.onPositionChanged(localPos);
+document.getElementById("calibrate-btn").addEventListener("click", function () {
+    compassCorrection = compass;
+});
 
-    // if (localPos.distanceTo(current_waypoint_pos) < 5) { // 5 meter radius
-    //     if (current_waypoint_pos < waypoints.length - 1) {
-    //         current_waypoint++;
-    //         current_waypoint_pos = ConvertGPStoUCS(waypoints[current_waypoint][0], waypoints[current_waypoint][1]);
-    //         waypoint.position.set(current_waypoint_pos.x, current_waypoint.y, current_waypoint.z);
-
-    //         // play ping sound
-    //         const sound = new THREE.Audio(listener);
-    //         const audioLoader = new THREE.AudioLoader();
-    //         audioLoader.load('sounds/ping.mp3', function (buffer) {
-    //             sound.setBuffer(buffer);
-    //             sound.setLoop(true);
-    //             sound.setVolume(0.5);
-    //             sound.play();
-    //         });
-    //     } else if (current_waypoint == waypoint.length - 1) {
-    //         // play finished sound
-    //         const sound = new THREE.Audio(listener);
-    //         const audioLoader = new THREE.AudioLoader();
-    //         audioLoader.load('sounds/headtracking.mp3', function (buffer) {
-    //             sound.setBuffer(buffer);
-    //             sound.setLoop(true);
-    //             sound.setVolume(0.5);
-    //             sound.play();
-    //         });
-    //     }
-    // }
-};
 
 var last_ping = -1;
 var last_bird = -1
@@ -110,65 +82,71 @@ var flight_dist = 10
 const ping_interval = 10;
 const bird_interval = 50;
 
-var waypoint_target_pos = new THREE.Vector3(0, 0, 0);
+var waypoint_target_pos = ConvertGPStoUCS(waypoints[0][0], waypoints[0][1]);
 
-(function loop() {
-    setTimeout(function () {
-        controls.targetPosition.x += 1;
-        const dist = controls.targetPosition.distanceTo(current_waypoint_pos);
-        const altered_dist = Math.max(0, dist - flight_dist);
-        document.getElementById("debug-coordinates").innerHTML = `x: ${controls.targetPosition.x}, y: ${controls.targetPosition.z}, dist: ${dist}`;
+/**
+ * Triggered when the geolocation updates.
+ */
+function geolocationUpdated(event) {
+    const crd = event.coords;
+    const localPos = ConvertGPStoUCS(crd.latitude, crd.longitude);
+    controls.onPositionChanged(localPos);
 
-        var step_ping = Math.floor(altered_dist / ping_interval);
-        var step_bird = Math.floor(altered_dist / bird_interval);
+    const dist = controls.targetPosition.distanceTo(current_waypoint_pos);
+    const altered_dist = Math.max(0, dist - flight_dist);
+    document.getElementById("debug-coordinates").innerHTML = `x: ${controls.targetPosition.x}, y: ${controls.targetPosition.z}, dist: ${dist}`;
 
-        var distance_vector = new THREE.Vector3();
-        distance_vector.copy(controls.targetPosition).sub(current_waypoint_pos).normalize();
+    var step_ping = Math.floor(altered_dist / ping_interval);
+    var step_bird = Math.floor(altered_dist / bird_interval);
 
-        if (last_bird == -1) {
-            console.log("initial set");
-            last_bird = step_bird;
+    var distance_vector = new THREE.Vector3();
+    distance_vector.copy(controls.targetPosition).sub(current_waypoint_pos);
+    console.log("dist", distance_vector);
+    distance_vector.normalize();
 
-            distance_vector.multiplyScalar(step_bird * bird_interval);
-            var new_pos = new THREE.Vector3(0, 0, 0);
-            new_pos.copy(current_waypoint_pos);
-            new_pos.add(distance_vector);
-            waypoint_target_pos.set(new_pos.x, new_pos.y, new_pos.z);
+    // Bird sound movement
+    if (last_bird == -1) {
+        console.log("initial set");
+        last_bird = step_bird;
 
-            console.log("set", distance_vector);
-        }
-        if (step_bird != last_bird) {
-            last_bird = step_bird;
+        distance_vector.multiplyScalar(step_bird * bird_interval);
+        var new_pos = new THREE.Vector3(0, 0, 0);
+        new_pos.copy(current_waypoint_pos);
+        new_pos.add(distance_vector);
+        waypoint_target_pos.set(new_pos.x, new_pos.y, new_pos.z);
 
-            distance_vector.multiplyScalar(step_bird * bird_interval);
-            var new_pos = new THREE.Vector3(0, 0, 0);
-            new_pos.copy(current_waypoint_pos);
-            new_pos.add(distance_vector);
-            waypoint_target_pos.set(new_pos.x, new_pos.y, new_pos.z);
-            console.log("set", distance_vector);
-        }
+        console.log("set", distance_vector);
+    }
+    if (step_bird != last_bird) {
+        last_bird = step_bird;
 
-        if (last_ping == -1) {
-            last_ping = step_ping;
-        }
-        if (step_ping != last_ping) {
-            last_ping = step_ping;
-            const sound = new THREE.Audio(listener);
-            const audioLoader = new THREE.AudioLoader();
-            audioLoader.load('sounds/ping.mp3', function (buffer) {
-                sound.setBuffer(buffer);
-                sound.setVolume(0.01);
-                sound.detune = -step_ping * 1200;
-                sound.play();
-            });
-        }
-        loop()
-    }, 200);
-}());
+        distance_vector.multiplyScalar(step_bird * bird_interval);
+        var new_pos = new THREE.Vector3(0, 0, 0);
+        new_pos.copy(current_waypoint_pos);
+        new_pos.add(distance_vector);
+        waypoint_target_pos.set(new_pos.x, new_pos.y, new_pos.z);
+        console.log("set", distance_vector);
+    }
+
+    // Ping sound when passing waypoint
+    if (last_ping == -1) {
+        last_ping = step_ping;
+    }
+    if (step_ping != last_ping) {
+        last_ping = step_ping;
+        const sound = new THREE.Audio(listener);
+        const audioLoader = new THREE.AudioLoader();
+        audioLoader.load('sounds/ping.mp3', function (buffer) {
+            sound.setBuffer(buffer);
+            sound.setVolume(0.01);
+            sound.detune = -step_ping * 1200;
+            sound.play();
+        });
+    }
+};
 
 function update(delta) {
     if (waypoint_target_pos) {
-        console.log(waypoint_target_pos);
         waypoint.position.lerp(waypoint_target_pos, 0.05);
     }
 }
@@ -182,7 +160,8 @@ function onError(err) {
 
 function initThreeScene() {
     camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
-    camera.position.set(0, 2, 0); // Initial position of user (camera) is 0, 0
+    let zero_pos = ConvertGPStoUCS(_LatLngOrigin[0], _LatLngOrigin[1]);
+    camera.position.set(zero_pos.x, zero_pos.y, zero_pos.z); // Initial position of user (camera) is 0, 0
     listener = new THREE.AudioListener();
     camera.add(listener);
 
@@ -204,10 +183,10 @@ function initThreeScene() {
     material1 = new THREE.MeshPhongMaterial({ color: 0xffaa00, flatShading: true, shininess: 0 });
 
     // waypoint sphere sound source
-    current_waypoint_pos = new THREE.Vector3(400, 2, 0);
+    current_waypoint_pos = ConvertGPStoUCS(waypoints[0][0], waypoints[0][1]);
+    // current_waypoint_pos = ConvertGPStoUCS(52.39421780602752, 13.133049949018309);
 
     waypoint = new THREE.Mesh(sphere, material1);
-    console.log(current_waypoint_pos.x, current_waypoint.y, current_waypoint.z);
     waypoint.position.set(current_waypoint_pos.x, current_waypoint_pos.y, current_waypoint_pos.z);
     waypoint.material.depthTest = false;
     waypoint.renderOrder = 2;

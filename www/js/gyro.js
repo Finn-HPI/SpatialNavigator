@@ -279,7 +279,7 @@ function _spatial_sensor_callback(quaternion, sensor_manager) {
     let q = new Quaternion();
     q.setFromEuler(0, corrected_yaw * (Math.PI / 180), 0, "XYZ");
     q.normalize();
-    controls.onRotationChanged(q);
+    // controls.onRotationChanged(q);
 
     // const head = document.querySelector("model-viewer#head");
     // head.orientation = `${0}rad ${0}0 ${yaw}deg`;
