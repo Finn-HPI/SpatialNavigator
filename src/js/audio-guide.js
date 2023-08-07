@@ -16,7 +16,7 @@ module.exports = class AudioGuide {
 
     this.flight_dist = 10;
     this.ping_dist = 10;
-    this.max_audio_dist = 50;
+    this.max_audio_dist = 25;
 
     this.last_ping = -1;
     this.last_audio_move = -1;
@@ -33,12 +33,12 @@ module.exports = class AudioGuide {
 
   position_updated(position) {
     const dist = this.controls.targetPosition.distanceTo(this.final_audio_position);
-    const clamped_dist = Math.max(0, dist - this.flight_dist);
+    // const clamped_dist = Math.max(0, dist - this.flight_dist);
 
     this.distElement.innerHTML = dist.toFixed(2) + " m";
 
-    this.step_ping = Math.floor(clamped_dist / this.ping_dist);
-    this.step_audio = Math.floor(clamped_dist / this.max_audio_dist);
+    this.step_ping = Math.floor(dist / this.ping_dist);
+    this.step_audio = Math.floor(dist / this.max_audio_dist);
 
     this.distance_vector = new THREE.Vector3();
     this.distance_vector
@@ -59,9 +59,12 @@ module.exports = class AudioGuide {
   }
 
   #update_audio_position() {
-    this.distance_vector.multiplyScalar(this.step_audio * this.max_audio_dist);
+    console.log("audi: ", this.step_audio);
+    
+    this.distance_vector.normalize().multiplyScalar(this.step_audio * this.max_audio_dist);
+    document.getElementById('debug').innerHTML = (this.step_audio * this.max_audio_dist) + ", l: " + this.distance_vector.length();
     var new_pos = new THREE.Vector3();
-    new_pos.copy(this.current_audio_position);
+    new_pos.copy(this.final_audio_position);
     new_pos.add(this.distance_vector);
     this.current_audio_position.set(new_pos.x, new_pos.y, new_pos.z);
     console.log("move audio:", this.distance_vector);
