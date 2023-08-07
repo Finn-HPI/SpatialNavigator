@@ -1,0 +1,60 @@
+@import url('../../node_modules/font-awesome/css/font-awesome.min.css');
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  color: white !important
+}
+
+#header {
+  display: flex;
+  padding: 1rem;
+  padding: auto;
+  flex-wrap: wrap;
+  border-bottom-style: solid;
+  position: fixed;
+  top: 0px;
+  width: 100%;
+  left: 0px;
+  background-image: linear-gradient(to right bottom, #d16ba5, #c777b9, #ba83ca, #aa8fd8, #9a9ae1, #8aa7ec, #79b3f4, #69bff8, #52cffe, #41dfff, #46eefa, #5ffbf1);
+  z-index: 2;
+}
+
+#header span,
+#header button {
+  align-self: center;
+  margin: 10px;
+  font-size: 100%;
+}
+
+.badge-primary {
+  background-color: #8064A2 !important;
+}
+
+#main {
+  position: fixed;
+  top: 0;
+  background-color: aliceblue;
+}
+
+#mapContainer {
+  bottom: 0px;
+  left: 0px;
+  position: fixed;
+  height: 30vh;
+  width: 50vw;
+  border-radius: 15px;
+  margin: 1rem;
+}
+
+#mapContainer #map {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+img {
+  width: 40px;
+  height: 40px;
+}

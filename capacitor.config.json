@@ -1,0 +1,12 @@
+{
+  "appId": "com.spatialnavigator.app",
+  "appName": "SpatialNavigator",
+  "bundledWebRuntime": false,
+  "webDir": "dist",
+  "linuxAndroidStudioPath": "/usr/bin/android-studio",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  }
+}
