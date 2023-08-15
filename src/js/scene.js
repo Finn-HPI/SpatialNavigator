@@ -81,7 +81,7 @@ function loadCoordinatesFromClipboard() {
         changeTargetPosition(lat, long);
       } else {
         // Warn in console if it doesn't contain coordinates
-        console.warn("clipboard doesn't contain regex: ", clipboardText);
+        console.warn(`Clipboard doesn't contain regex: "${clipboardText}"`);
       }
     })
     .catch((e) => console.warn("Error reading from clipboard:", e));

@@ -1,3 +1,5 @@
+import config from "./config";
+
 // Setup Map:
 var map = L.map("map", { zoomControl: false }).setView(
   [51.163361, 10.447683],
@@ -12,7 +14,7 @@ document.getElementsByClassName(
   "leaflet-control-attribution"
 )[0].style.display = "none";
 
-let marker, accuracyCircle, lat, long, accuracy, circle, featureGroup;
+let marker, accuracyCircle, lat, long, accuracy, circle, featureGroup, targetMarker;
 let coordinates = document.getElementById("coordinates");
 
 /**
@@ -37,7 +39,20 @@ function displayPosition(event) {
   marker = L.marker([lat, long]);
   accuracyCircle = L.circle([lat, long], { radius: accuracy });
   featureGroup = L.featureGroup([marker, accuracyCircle]).addTo(map);
-  map.fitBounds(featureGroup.getBounds());
+
+  if (targetMarker) {
+    map.removeLayer(targetMarker);
+    targetMarker = null;
+  }
+  if (config.debugMode) {
+    targetMarker = L.marker(config.target).addTo(map);
+    targetMarker._icon.className = "target-marker";
+    console.log(targetMarker);
+    const fg = L.featureGroup([featureGroup, targetMarker]);
+    map.fitBounds(fg.getBounds());
+  } else {
+    map.fitBounds(featureGroup.getBounds());
+  }
 }
 
 function error(message) {
