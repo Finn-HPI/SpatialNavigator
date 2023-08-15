@@ -14,7 +14,7 @@ import splash_audio from "@assets/sounds/water_splash.mp3";
 import FirstPersonControls from "./person-controller";
 import AudioGuide from "./audio-guide";
 
-import ConvertGPStoUCS from "./utils";
+import {ConvertGPStoUCS, logValues, logData} from "./utils";
 import config from "./config";
 
 let camera, scene, renderer, listener, audio_object, sound;
@@ -101,9 +101,14 @@ function changeTargetPosition(latitude, longitude) {
  */
 function geolocationUpdated(event) {
   const crd = event.coords;
+  logValues.lat = crd.latitude;
+  logValues.long = crd.longitude;
   const world_position = ConvertGPStoUCS(crd.latitude, crd.longitude);
+  logValues.worldPosition = world_position;
   config.controls.onPositionChanged(world_position);
-  audio_guide.position_updated(world_position);
+  const dist = audio_guide.position_updated(world_position); // Hacky way to get the distance here
+  logValues.dist = dist;
+  logData();
 }
 
 function update(delta) {

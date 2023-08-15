@@ -4,6 +4,16 @@ let metersPerLon;
 let THREE = require("three");
 let config = require("./config");
 
+let loggingData = [];
+let logValues = {
+  time: Date.now(),
+  timeString: "initial value",
+  lat: 0,
+  long: 0,
+  dist: 0,
+  worldPosition: [],
+}
+
 function FindMetersPerLat(lat) {
   // Compute lengths of degrees
   const m1 = 111132.92; // latitude calculation term 1
@@ -31,9 +41,46 @@ function FindMetersPerLat(lat) {
  * @param {*} lng - Longitude from device
  * @returns THREE.Vector3 with `x` and `z` being the coordinates in the local coordinate system and `y = 2`.
  */
-module.exports = function ConvertGPStoUCS(lat, lng) {
+const ConvertGPStoUCS = (lat, lng) => {
   FindMetersPerLat(config._LatLngOrigin[0]);
   const zPosition = metersPerLat * (lat - config._LatLngOrigin[0]); //Calc current lat
   const xPosition = metersPerLon * (lng - config._LatLngOrigin[1]); //Calc current lat
   return new THREE.Vector3(xPosition, 2, -zPosition);
+};
+
+/**
+ * Logs the given data for later download
+ * @param {*} data - the data to be logged
+ */
+const logData = () => {
+  const time = new Date();
+  logValues.time = Date.now();
+  logValues.timeString = time.toISOString();
+  const data = {
+    ...logValues,
+    ...config
+  };
+  loggingData.push(data);
+  console.log("LOGGER:", loggingData);
+}
+
+const downloadLog = () => {
+  // TODO: Test this!
+  downloadDataString(loggingData, "json", "data");
+}
+
+function downloadDataString(dataString, dataFormat, filename) {
+  var dataStr = `data:text/${dataFormat};charset=utf-8,` + encodeURIComponent(dataString);
+  var downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href",     dataStr);
+  downloadAnchorNode.setAttribute("download", `${filename}.${dataFormat}`);
+  document.body.appendChild(downloadAnchorNode); // required for firefox
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+}
+
+module.exports = {
+  ConvertGPStoUCS,
+  logData,
+  logValues,
 };

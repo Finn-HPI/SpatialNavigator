@@ -31,6 +31,10 @@ module.exports = class AudioGuide {
     this.distElement = document.getElementById("distance");
   }
 
+  /**
+   * Updates the virtual position of the user and updates audio and pings.
+   * @returns the distance to the target
+   */
   position_updated(position) {
     const dist = this.controls.targetPosition.distanceTo(this.final_audio_position);
     // const clamped_dist = Math.max(0, dist - this.flight_dist);
@@ -48,6 +52,8 @@ module.exports = class AudioGuide {
 
     this.#audio_update();
     this.#ping_update();
+    
+    return dist; // This is done because utils cannot be loaded here.
   }
 
   #audio_update() {
