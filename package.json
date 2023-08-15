@@ -17,6 +17,7 @@
     "@capacitor/android": "^5.2.2",
     "@capacitor/camera": "latest",
     "@capacitor/core": "latest",
+    "@capacitor/filesystem": "^5.1.2",
     "@capacitor/splash-screen": "latest",
     "axios": "^1.4.0",
     "bootstrap": "^5.3.1",

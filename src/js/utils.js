@@ -1,3 +1,6 @@
+// import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+let fs = require("@capacitor/filesystem");
+
 let metersPerLat;
 let metersPerLon;
 
@@ -10,8 +13,7 @@ let logValues = {
   timeString: "initial value",
   lat: 0,
   long: 0,
-  dist: 0,
-  worldPosition: [],
+  dist: 0
 }
 
 document.getElementById("debug-btn").addEventListener("click", toggleDebugMode);
@@ -67,13 +69,22 @@ const logData = () => {
   logValues.timeString = time.toISOString();
   const data = {
     ...logValues,
-    ...config
+    target: config.target
   };
   loggingData.push(data);
 }
 
-function downloadLog () {
-  downloadDataString(JSON.stringify(loggingData, null, 4), "json", "data");
+async function downloadLog() {
+  const dataString = JSON.stringify(loggingData, null, 4)
+  const time = Date.now();
+  const filename = `SpatialNavigator-${time}.json`;
+  // downloadDataString(filename, "json", "data"); // Export for online as download
+  await fs.Filesystem.writeFile({
+    path: filename,
+    data: dataString,
+    directory: fs.Directory.Documents,
+    encoding: fs.Encoding.UTF8,
+  });
 }
 
 document.getElementById("download-btn").addEventListener("click", downloadLog);

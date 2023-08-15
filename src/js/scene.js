@@ -104,10 +104,9 @@ function geolocationUpdated(event) {
   const crd = event.coords;
   logValues.lat = crd.latitude;
   logValues.long = crd.longitude;
-  const world_position = ConvertGPStoUCS(crd.latitude, crd.longitude);
-  logValues.worldPosition = world_position;
-  config.controls.onPositionChanged(world_position);
-  const dist = audio_guide.position_updated(world_position); // Hacky way to get the distance here
+  const worldPosition = ConvertGPStoUCS(crd.latitude, crd.longitude);
+  config.controls.onPositionChanged(worldPosition);
+  const dist = audio_guide.position_updated(worldPosition); // Hacky way to get the distance here
   logValues.dist = dist;
   logData();
 }
