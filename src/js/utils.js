@@ -64,10 +64,13 @@ const logData = () => {
   console.log("LOGGER:", loggingData);
 }
 
-const downloadLog = () => {
+function downloadLog () {
   // TODO: Test this!
-  downloadDataString(loggingData, "json", "data");
+  console.log("Downloading");
+  downloadDataString(JSON.stringify(loggingData, null, 4), "json", "data");
 }
+
+document.getElementById("download-btn").addEventListener("click", downloadLog);
 
 function downloadDataString(dataString, dataFormat, filename) {
   var dataStr = `data:text/${dataFormat};charset=utf-8,` + encodeURIComponent(dataString);
