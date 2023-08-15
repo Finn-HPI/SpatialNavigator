@@ -14,6 +14,15 @@ let logValues = {
   worldPosition: [],
 }
 
+document.getElementById("debug-btn").addEventListener("click", toggleDebugMode);
+
+function toggleDebugMode() {
+  const debug = !config.debugMode;
+  config.debugMode = debug;
+  document.getElementById("debug-icon").className = `fa fa-${debug ? "eye" : "eye-slash"}`;
+  document.getElementById("overlay").style = `opacity: ${debug ? 1 : 0}`;
+}
+
 function FindMetersPerLat(lat) {
   // Compute lengths of degrees
   const m1 = 111132.92; // latitude calculation term 1
@@ -61,12 +70,9 @@ const logData = () => {
     ...config
   };
   loggingData.push(data);
-  console.log("LOGGER:", loggingData);
 }
 
 function downloadLog () {
-  // TODO: Test this!
-  console.log("Downloading");
   downloadDataString(JSON.stringify(loggingData, null, 4), "json", "data");
 }
 

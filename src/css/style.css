@@ -4,7 +4,8 @@ html,
 body {
   padding: 0;
   margin: 0;
-  color: white !important
+  color: white !important;
+  background-color: black;
 }
 
 #header {
@@ -36,6 +37,10 @@ body {
   position: fixed;
   top: 0;
   background-color: aliceblue;
+}
+
+#overlay {
+  transition-duration: 1s;
 }
 
 #mapContainer {

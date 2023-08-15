@@ -56,27 +56,32 @@
 
   <body>
     <div id="header">
-      <span class="badge badge-primary"
+      <span class="badge badge-primary" title="Your current position"
         ><i class="fa fa-globe" aria-hidden="true"></i>
         <a id="coordinates">- | -</a></span
       >
-      <span class="badge badge-primary"
+      <span class="badge badge-primary" title="Distance to the target"
         ><i class="fa fa-arrows-h" aria-hidden="true"></i>
         <a id="distance">-</a></span
       >
-      <button id="loadCoordinates" class="btn btn-primary">New target</button>
-      <button class="btn btn-primary" type="button" id="calibrate-btn">
+      <button id="loadCoordinates" class="btn btn-primary" title="Load new target coordinates from clipboard">New target</button>
+      <button class="btn btn-primary" type="button" id="calibrate-btn" title="Calibrate orientation of head-tracking while looking north">
         Calibrate
       </button>
-      <button class="btn btn-primary" type="button" id="download-btn">
+      <button class="btn btn-secondary" type="button" id="download-btn" title="Download recorded data">
         <i class="fa fa-download" aria-hidden="true"></i>
+      </button>
+      <button class="btn btn-secondary" type="button" id="debug-btn" title="Toggle Debug UI">
+        <i class="fa fa-eye" aria-hidden="true" id="debug-icon"></i>
       </button>
       <div id="img-container" class="m-2"></div>
       <div id="debug"></div>
     </div>
-    <div id="main"></div>
-    <div id="mapContainer">
-      <div id="map"></div>
+    <div id="overlay">
+      <div id="main"></div>
+      <div id="mapContainer">
+        <div id="map"></div>
+      </div>
     </div>
     <script src="./js/person-controller.js" type="module"></script>
     <script src="./js/audio-guide.js" type="module"></script>
