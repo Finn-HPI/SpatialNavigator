@@ -17,8 +17,6 @@ import AudioGuide from "./audio-guide";
 import {ConvertGPStoUCS, logValues, logData} from "./utils";
 import config from "./config";
 
-import { Toast } from "@capacitor/toast";
-
 let camera, scene, renderer, listener, audio_object, sound;
 
 let material;
@@ -80,7 +78,6 @@ function loadCoordinatesFromClipboard() {
         const lat = match[1];
         const long = match[4];
         console.log("Successfully loaded from clipboard:", [lat, long]);
-        toast.show({text: "Target location updated", position: "top"});
         window.alert("Location updated");
         changeTargetPosition(lat, long);
       } else {
