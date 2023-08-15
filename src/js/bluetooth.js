@@ -28,8 +28,6 @@ document.getElementById("calibrate-btn").addEventListener("click", function () {
 });
 
 function onDeviceReady() {
-  // Cordova is now initialized. Have fun!
-  console.log("ready");
   const uuid = "00001101-0000-1000-8000-00805F9B34FB";
   const device_name = "ESP32-Headtracking";
 
@@ -54,7 +52,6 @@ function onDeviceReady() {
             }
             if (icon.src.includes(person_error)) {
               icon.src = person;
-              console.log("received data");
               config.use_device_orientation = false;
             }
             receive_data(receiveInfo.data);
@@ -68,11 +65,11 @@ function onDeviceReady() {
               icon.src = person_error;
             }
             config.use_device_orientation = true;
-            console.log(errorInfo.errorMessage);
+            console.error(errorInfo.errorMessage);
           });
         },
         function (errorMessage) {
-          console.log("Connection failed: " + errorMessage);
+          console.error("Connection failed: " + errorMessage);
         }
       );
     }

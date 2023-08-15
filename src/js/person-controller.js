@@ -51,7 +51,6 @@ module.exports = class FirstPersonControls {
   }
 
   onPositionChanged(pos) {
-    console.log(this.targetPosition);
     this.targetPosition = pos;
   }
 

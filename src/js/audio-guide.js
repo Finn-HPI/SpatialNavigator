@@ -64,16 +64,12 @@ module.exports = class AudioGuide {
     }
   }
 
-  #update_audio_position() {
-    console.log("audi: ", this.step_audio);
-    
+  #update_audio_position() {    
     this.distance_vector.normalize().multiplyScalar(this.step_audio * this.max_audio_dist);
-    document.getElementById('debug').innerHTML = (this.step_audio * this.max_audio_dist) + ", l: " + this.distance_vector.length();
     var new_pos = new THREE.Vector3();
     new_pos.copy(this.final_audio_position);
     new_pos.add(this.distance_vector);
     this.current_audio_position.set(new_pos.x, new_pos.y, new_pos.z);
-    console.log("move audio:", this.distance_vector);
   }
 
   #ping_update() {
