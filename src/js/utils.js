@@ -53,9 +53,9 @@ function FindMetersPerLat(lat) {
  * @returns THREE.Vector3 with `x` and `z` being the coordinates in the local coordinate system and `y = 2`.
  */
 const ConvertGPStoUCS = (lat, lng) => {
-  FindMetersPerLat(config._LatLngOrigin[0]);
-  const zPosition = metersPerLat * (lat - config._LatLngOrigin[0]); //Calc current lat
-  const xPosition = metersPerLon * (lng - config._LatLngOrigin[1]); //Calc current lat
+  FindMetersPerLat(config.target[0]);
+  const zPosition = metersPerLat * (lat - config.target[0]); //Calc current lat
+  const xPosition = metersPerLon * (lng - config.target[1]); //Calc current lat
   return new THREE.Vector3(xPosition, 2, -zPosition);
 };
 

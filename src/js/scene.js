@@ -130,8 +130,8 @@ function initThreeScene() {
     10000
   );
   let zero_pos = ConvertGPStoUCS(
-    config._LatLngOrigin[0],
-    config._LatLngOrigin[1]
+    config.target[0],
+    config.target[1]
   );
   camera.position.set(zero_pos.x, zero_pos.y, zero_pos.z); // Initial position of user (camera) is 0, 0
   listener = new THREE.AudioListener();
