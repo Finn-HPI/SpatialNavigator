@@ -17,10 +17,14 @@ document.getElementsByClassName(
 let marker, accuracyCircle, lat, long, accuracy, circle, featureGroup, targetMarker;
 let coordinates = document.getElementById("coordinates");
 
+// Allows us to rerender the map without a specific update from the GPS
+let lastEvent = null;
+
 /**
  * Update the map according to the position object.
  */
-function displayPosition(event) {
+function displayPosition(event = lastEvent) {
+  lastEvent = event;
   lat = event.coords.latitude;
   long = event.coords.longitude;
   accuracy = event.coords.accuracy;

@@ -1,5 +1,6 @@
 // import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 let fs = require("@capacitor/filesystem");
+let map = require("./map");
 
 let metersPerLat;
 let metersPerLon;
@@ -22,7 +23,8 @@ function toggleDebugMode() {
   const debug = !config.debugMode;
   config.debugMode = debug;
   document.getElementById("debug-icon").className = `fa fa-${debug ? "eye" : "eye-slash"}`;
-  document.getElementById("overlay").style = `opacity: ${debug ? 1 : 0}`;
+  document.getElementById("overlay").className = debug ? "visible" : "hidden";
+  map.displayPosition();
 }
 
 function FindMetersPerLat(lat) {
@@ -84,7 +86,7 @@ async function downloadLog() {
     data: dataString,
     directory: fs.Directory.Documents,
     encoding: fs.Encoding.UTF8,
-  });
+  }).then(() => window.alert("Download complete."));
 }
 
 document.getElementById("download-btn").addEventListener("click", downloadLog);
