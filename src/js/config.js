@@ -1,6 +1,6 @@
-// Origin (0,0) of local coordinates set in front of Ulf at HPI.
-const _LatLngOrigin = [52.39396671415385, 13.132991434383008];
-let target = [52.3939660602991, 13.132982200484582];
+// Origin (0,0) of local coordinates
+const _LatLngOrigin = [52.40684161604002, 13.095645035711499];
+let target = [52.40684161604002, 13.095645035711499];
 let debugMode = true;
 var use_device_orientation = true;
 let calibrate_diff = 0;
