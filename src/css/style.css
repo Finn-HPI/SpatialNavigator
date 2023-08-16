@@ -39,7 +39,16 @@ body {
   background-color: aliceblue;
 }
 
+#overlay {
+  transition-duration: 1s;
+}
+
+#overlay #main {
+  transition-duration: 1s;
+}
+
 #overlay.hidden #main {
+  transition-duration: 1s;
   opacity: 0;
 }
 
