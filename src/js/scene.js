@@ -15,6 +15,7 @@ import FirstPersonControls from "./person-controller";
 import AudioGuide from "./audio-guide";
 
 import {ConvertGPStoUCS, logValues, logData} from "./utils";
+import { Clipboard } from '@capacitor/clipboard';
 import config from "./config";
 
 let camera, scene, renderer, listener, audio_object, sound;
@@ -66,26 +67,23 @@ document
 /**
  * Checks the clipboard for coordinates and takes them as the new target location if they exist
  */
-function loadCoordinatesFromClipboard() {
-  navigator.clipboard
-    .readText()
-    .then((clipboardText) => {
-      const match = clipboardText.match(
-        /^([1-8]?\d(\.\d+)?|90(\.0+)?),\s*(((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/
-      );
-      if (match) {
-        // If clipboard contains coordinates
-        const lat = match[1];
-        const long = match[4];
-        console.log("Successfully loaded from clipboard:", [lat, long]);
-        window.alert("Location updated");
-        changeTargetPosition(lat, long);
-      } else {
-        // Warn in console if it doesn't contain coordinates
-        console.warn(`Clipboard doesn't contain regex: "${clipboardText}"`);
-      }
-    })
-    .catch((e) => console.warn("Error reading from clipboard:", e));
+async function loadCoordinatesFromClipboard() {
+  const clipboardText = document.getElementById("coordinate-input").value;
+  console.log(clipboardText);
+  const match = clipboardText.match(
+    /^([1-8]?\d(\.\d+)?|90(\.0+)?),\s*(((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/
+  );
+  if (match) {
+    // If clipboard contains coordinates
+    const lat = match[1];
+    const long = match[4];
+    console.log("Successfully loaded from clipboard:", [lat, long]);
+    window.alert("Location updated");
+    changeTargetPosition(lat, long);
+  } else {
+    // Warn in console if it doesn't contain coordinates
+    console.warn(`Clipboard doesn't contain regex: "${clipboardText}"`);
+  }
 }
 
 /**
