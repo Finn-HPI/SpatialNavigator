@@ -120,7 +120,8 @@ function changeTargetId(id) {
     final_audio_position.y,
     final_audio_position.z
   );
-  audio_guide.reset();
+  audio_guide.reset(current_audio_position, final_audio_position);
+  audio_guide.position_updated(camera.position);
   console.log(`Changed targetId to ${id}: ${target[0]}, ${target[1]}`);
 }
 

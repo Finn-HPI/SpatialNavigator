@@ -31,16 +31,15 @@ module.exports = class AudioGuide {
     this.distElement = document.getElementById("distance");
   }
 
-  reset() {
+  reset(current_audio_position, final_audio_position) {
+    this.current_audio_position = current_audio_position;
+    this.final_audio_position = final_audio_position;
     this.flight_dist = 10;
     this.ping_dist = 10;
     this.max_audio_dist = 25;
 
     this.last_ping = -1;
     this.last_audio_move = -1;
-
-    this.ping_audio = ping_audio;
-    this.splash_audio = splash_audio;
 
     this.step_ping = 0;
     this.step_audio = 0;
