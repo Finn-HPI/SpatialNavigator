@@ -31,12 +31,29 @@ module.exports = class AudioGuide {
     this.distElement = document.getElementById("distance");
   }
 
+  reset() {
+    this.flight_dist = 10;
+    this.ping_dist = 10;
+    this.max_audio_dist = 25;
+
+    this.last_ping = -1;
+    this.last_audio_move = -1;
+
+    this.ping_audio = ping_audio;
+    this.splash_audio = splash_audio;
+
+    this.step_ping = 0;
+    this.step_audio = 0;
+  }
+
   /**
    * Updates the virtual position of the user and updates audio and pings.
    * @returns the distance to the target
    */
   position_updated(position) {
-    const dist = this.controls.targetPosition.distanceTo(this.final_audio_position);
+    const dist = this.controls.targetPosition.distanceTo(
+      this.final_audio_position
+    );
     // const clamped_dist = Math.max(0, dist - this.flight_dist);
 
     this.distElement.innerHTML = dist.toFixed(2) + " m";
@@ -52,7 +69,7 @@ module.exports = class AudioGuide {
 
     this.#audio_update();
     this.#ping_update();
-    
+
     return dist; // This is done because utils cannot be loaded here.
   }
 
@@ -64,8 +81,10 @@ module.exports = class AudioGuide {
     }
   }
 
-  #update_audio_position() {    
-    this.distance_vector.normalize().multiplyScalar(this.step_audio * this.max_audio_dist);
+  #update_audio_position() {
+    this.distance_vector
+      .normalize()
+      .multiplyScalar(this.step_audio * this.max_audio_dist);
     var new_pos = new THREE.Vector3();
     new_pos.copy(this.final_audio_position);
     new_pos.add(this.distance_vector);

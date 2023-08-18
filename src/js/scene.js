@@ -115,6 +115,12 @@ function changeTargetId(id) {
   const local_coordinates = ConvertGPStoUCS(target[0], target[1]);
   final_audio_position = local_coordinates;
   current_audio_position = local_coordinates;
+  audio_object.position.set(
+    final_audio_position.x,
+    final_audio_position.y,
+    final_audio_position.z
+  );
+  audio_guide.reset();
   console.log(`Changed targetId to ${id}: ${target[0]}, ${target[1]}`);
 }
 
