@@ -49,7 +49,8 @@ function displayPosition(event = lastEvent) {
     targetMarker = null;
   }
   if (config.debugMode) {
-    targetMarker = L.marker(config.target).addTo(map);
+    const target = config.targets[config.targetId];
+    targetMarker = L.marker(target).addTo(map);
     targetMarker._icon.className = "target-marker";
     const fg = L.featureGroup([featureGroup, targetMarker]);
     map.fitBounds(fg.getBounds());

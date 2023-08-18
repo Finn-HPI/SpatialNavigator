@@ -1,4 +1,3 @@
-// import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 let fs = require("@capacitor/filesystem");
 let map = require("./map");
 
@@ -55,9 +54,10 @@ function FindMetersPerLat(lat) {
  * @returns THREE.Vector3 with `x` and `z` being the coordinates in the local coordinate system and `y = 2`.
  */
 const ConvertGPStoUCS = (lat, lng) => {
-  FindMetersPerLat(config.target[0]);
-  const zPosition = metersPerLat * (lat - config.target[0]); //Calc current lat
-  const xPosition = metersPerLon * (lng - config.target[1]); //Calc current lat
+  const target = config.targets[config.targetId];
+  FindMetersPerLat(target[0]);
+  const zPosition = metersPerLat * (lat - target[0]); //Calc current lat
+  const xPosition = metersPerLon * (lng - target[1]); //Calc current lat
   return new THREE.Vector3(xPosition, 2, -zPosition);
 };
 
@@ -66,12 +66,14 @@ const ConvertGPStoUCS = (lat, lng) => {
  * @param {*} data - the data to be logged
  */
 const logData = () => {
+  const target = config.targets[config.targetId];
   const time = new Date();
   logValues.time = Date.now();
   logValues.timeString = time.toISOString();
   const data = {
     ...logValues,
-    target: config.target
+    target: target,
+    targetId: config.targetId
   };
   loggingData.push(data);
 }

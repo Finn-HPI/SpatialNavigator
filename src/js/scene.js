@@ -60,9 +60,18 @@ document.getElementById("calibrate-btn").addEventListener("click", function () {
 });
 
 // Setup button to load coordinates from clipboard.
+// document
+//   .getElementById("loadCoordinates")
+//   .addEventListener("click", loadCoordinatesFromClipboard);
+
 document
   .getElementById("loadCoordinates")
-  .addEventListener("click", loadCoordinatesFromClipboard);
+  .addEventListener("click", selectCoordinates);
+
+function selectCoordinates() {
+  const newId = Number(document.getElementById("target-selection").value);
+  changeTargetId(newId);
+}
 
 /**
  * Checks the clipboard for coordinates and takes them as the new target location if they exist
@@ -90,9 +99,23 @@ async function loadCoordinatesFromClipboard() {
  * Changes the position of the target based on GPS coordinates
  */
 function changeTargetPosition(latitude, longitude) {
-  config.target = [latitude, longitude];
+  config.targets.push([latitude, longitude]);
+  config.targetId = config.targets.length - 1;
   const local_coordinates = ConvertGPStoUCS(latitude, longitude);
   final_audio_position = local_coordinates;
+  current_audio_position = local_coordinates;
+}
+
+/**
+ * Changes the position of the target based on GPS coordinates
+ */
+function changeTargetId(id) {
+  config.targetId = id;
+  const target = config.targets[config.targetId];
+  const local_coordinates = ConvertGPStoUCS(target[0], target[1]);
+  final_audio_position = local_coordinates;
+  current_audio_position = local_coordinates;
+  console.log(`Changed targetId to ${id}: ${target[0]}, ${target[1]}`);
 }
 
 /**
@@ -129,9 +152,10 @@ function initThreeScene() {
     1,
     10000
   );
+  const target = config.targets[config.targetId];
   let zero_pos = ConvertGPStoUCS(
-    config.target[0],
-    config.target[1]
+    target[0],
+    target[1]
   );
   camera.position.set(zero_pos.x, zero_pos.y, zero_pos.z); // Initial position of user (camera) is 0, 0
   listener = new THREE.AudioListener();
@@ -156,8 +180,8 @@ function initThreeScene() {
     shininess: 0,
   });
 
-  final_audio_position = ConvertGPStoUCS(config.target[0], config.target[1]);
-  current_audio_position = ConvertGPStoUCS(config.target[0], config.target[1]);
+  final_audio_position = ConvertGPStoUCS(target[0], target[1]);
+  current_audio_position = ConvertGPStoUCS(target[0], target[1]);
 
   audio_object = new THREE.Mesh(sphere, material);
   audio_object.position.set(
