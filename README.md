@@ -1,7 +1,6 @@
 # Spatial Navigator
 
-This app was created using [`@capacitor/create-app`](https://github.com/ionic-team/create-capacitor-app),
-and comes with a very minimal shell for building an app.
+This is a project created by [JulianEgbert](https://github.com/JulianEgbert) and [Finn Schöllkopf](https://github.com/Finn-HPI).
 
 ## Running this example
 
